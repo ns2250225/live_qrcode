@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { put } from '@vercel/blob'
 import { Prisma } from '@prisma/client'
 
 export async function POST(req: NextRequest) {
@@ -31,22 +30,16 @@ export async function POST(req: NextRequest) {
     } else if (type === 'IMAGE') {
       if (!imageFile) return NextResponse.json({ error: 'Image file is required' }, { status: 400 })
       
-      // Save file
-      const buffer = Buffer.from(await imageFile.arrayBuffer())
-      // Sanitize filename
-      const safeName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')
-      const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}-${safeName}`
-      const uploadDir = path.join(process.cwd(), 'public/uploads')
-      
-      // Ensure dir exists
       try {
-        await mkdir(uploadDir, { recursive: true })
-      } catch (e) {
-        // ignore if exists
+        // Upload to Vercel Blob
+        const blob = await put(imageFile.name, imageFile, {
+          access: 'public',
+        })
+        targetContent = blob.url
+      } catch (error) {
+        console.error('Blob upload error:', error)
+        return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 })
       }
-      
-      await writeFile(path.join(uploadDir, filename), buffer)
-      targetContent = `/uploads/${filename}`
     } else {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
     }
