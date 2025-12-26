@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    container_name: live-qrcode
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/dev.db
+      - NEXT_TELEMETRY_DISABLED=1
+    volumes:
+      - ./data:/app/data
+      - ./public/uploads:/app/public/uploads
