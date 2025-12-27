@@ -4,11 +4,11 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { QRCodeSVG } from "qrcode.react"
+import { QRCodeCard } from "@/components/QRCodeCard"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Edit, Link as LinkIcon, Image as ImageIcon, ExternalLink, Settings, Copy, Download } from "lucide-react"
+import { Settings } from "lucide-react"
 
 interface DynamicCode {
   id: string
@@ -76,28 +76,6 @@ export default function DashboardPage() {
     setShowDomainSettings(false)
   }
 
-  const handleCopyLink = (url: string) => {
-    navigator.clipboard.writeText(url)
-    toast.success("链接已复制")
-  }
-
-  const handleDownloadQR = (id: string, shortCode: string) => {
-    const svg = document.getElementById(`qr-${id}`)
-    if (svg) {
-        const svgData = new XMLSerializer().serializeToString(svg)
-        const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.href = url
-        link.download = `qrcode-${shortCode}.svg`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-    } else {
-        toast.error("下载失败")
-    }
-  }
-
   if (loading) return <div>加载中...</div>
 
   return (
@@ -151,48 +129,9 @@ export default function DashboardPage() {
         {codes.length === 0 && (
             <p className="text-gray-500 col-span-full text-center py-10">您还没有创建任何活码。</p>
         )}
-        {codes.map((code) => {
-           const qrUrl = origin ? `${origin}/q/${code.short_code}` : ""
-           return (
-            <Card key={code.id} className="overflow-hidden">
-                <CardHeader className="bg-gray-100 p-4 flex flex-row justify-between items-center space-y-0">
-                    <span className="font-mono text-sm font-bold bg-white px-2 py-1 rounded border">
-                        {code.short_code}
-                    </span>
-                    {code.type === 'LINK' ? <LinkIcon size={16} /> : <ImageIcon size={16} />}
-                </CardHeader>
-                <CardContent className="p-6 flex flex-col items-center gap-4">
-                    <div className="border p-2 bg-white rounded">
-                        {qrUrl && <QRCodeSVG id={`qr-${code.id}`} value={qrUrl} size={150} level="H" includeMargin={true} />}
-                    </div>
-                    <div className="text-center w-full">
-                        <p className="text-sm text-gray-500 truncate w-full" title={code.target_content}>
-                            目标: {code.target_content}
-                        </p>
-                        <p className="text-sm font-semibold mt-1">访问量: {code.visits}</p>
-                    </div>
-                </CardContent>
-                <CardFooter className="bg-gray-50 p-3 grid grid-cols-4 gap-2">
-                    <Button variant="ghost" size="icon" className="w-full" asChild title="测试跳转">
-                        <a href={qrUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink size={16} />
-                        </a>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-full" onClick={() => handleCopyLink(qrUrl)} title="复制链接">
-                        <Copy size={16} />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-full" onClick={() => handleDownloadQR(code.id, code.short_code)} title="下载二维码">
-                        <Download size={16} />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="w-full" asChild title="编辑">
-                        <Link href={`/dashboard/edit/${code.id}`}>
-                            <Edit size={16} />
-                        </Link>
-                    </Button>
-                </CardFooter>
-            </Card>
-           )
-        })}
+        {codes.map((code) => (
+            <QRCodeCard key={code.id} code={code} origin={origin} />
+        ))}
       </div>
     </div>
   )
